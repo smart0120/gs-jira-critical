@@ -47,10 +47,10 @@ def main():
         item_name = record[index_from_col(os.getenv('ITEM_NAME'))]
         tool_owner = record[index_from_col(os.getenv('TOOL_OWNER'))]
 
-        owner_email = ''
+        owner_id = ''
         try:
             find_owner = secondary_worksheet.find(tool_owner)
-            owner_email = secondary_worksheet.cell(find_owner.row, index_from_col(os.getenv('OWNER_EMAIL'))+1).value
+            owner_id = secondary_worksheet.cell(find_owner.row, index_from_col(os.getenv('OWNER_ID'))+1).value
         except GSpreadException as err:
             print(str(err))
 
@@ -88,8 +88,12 @@ def main():
                         ]
                     },
                     {
-                        "text": owner_email,
-                        "type": "text"
+                        "type": "mention",
+                        "attrs": {
+                            "id": owner_id,
+                            "text": tool_owner,
+                            "userType": "DEFAULT"
+                        }
                     },
                 ]
             },
@@ -106,8 +110,12 @@ def main():
                         ]
                     },
                     {
-                        "text": owner_email,
-                        "type": "text"
+                        "type": "mention",
+                        "attrs": {
+                            "id": owner_id,
+                            "text": tool_owner,
+                            "userType": "DEFAULT"
+                        }
                     },
                     {
                         "type": "hardBreak"
