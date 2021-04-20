@@ -25,7 +25,10 @@ def index_from_col(col_name):
     Return index from column name
     For example, 0 for A, 1 for B, etc
     """
-    return ord(col_name.upper()) - 65
+    index = 0
+    for idx in range(len(col_name)):
+        index += (ord(col_name[idx].upper()) - 64) * pow(26, (len(col_name)-idx-1))
+    return index - 1
 
 def main():
     # Open Google Sheet
@@ -46,13 +49,23 @@ def main():
         record = primary_worksheet.row_values(row)
         item_name = record[index_from_col(os.getenv('ITEM_NAME'))]
         tool_owner = record[index_from_col(os.getenv('TOOL_OWNER'))]
+        data_owner = record[index_from_col(os.getenv('DATA_OWNER'))]
 
+        # Get tool_owner's Jira ID
         owner_id = ''
         try:
             find_owner = secondary_worksheet.find(tool_owner)
             owner_id = secondary_worksheet.cell(find_owner.row, index_from_col(os.getenv('OWNER_ID'))+1).value
         except GSpreadException as err:
-            print(str(err))
+            pass
+
+        # Get data_owner's Jira ID
+        data_owner_id = ''
+        try:
+            find_owner = secondary_worksheet.find(data_owner)
+            data_owner_id = secondary_worksheet.cell(find_owner.row, index_from_col(os.getenv('OWNER_ID'))+1).value
+        except GSpreadException as err:
+            pass
 
         template = {
             "type": "doc",
@@ -112,8 +125,8 @@ def main():
                     {
                         "type": "mention",
                         "attrs": {
-                            "id": owner_id,
-                            "text": tool_owner,
+                            "id": data_owner_id,
+                            "text": data_owner,
                             "userType": "DEFAULT"
                         }
                     },
@@ -1473,6 +1486,16 @@ def main():
                 ]
             }]
         }
+
+        # Show or Hide table row according to pre-defined cell's definition
+        table_flag_columns = os.getenv('TABLE_FLAG_COLUMNS')
+        starting_pos = 1
+        for cell in table_flag_columns.split(','):
+            # remove according row if its value isn't 'Yes'
+            if record[index_from_col(cell)] != 'Yes':
+                template['content'][-1]['content'].pop(starting_pos)
+            else:
+                starting_pos += 1
 
         issue_dict = {
             'project': os.getenv('JIRA_PROJECT_KEY'),
